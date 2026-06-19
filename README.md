@@ -39,9 +39,10 @@ Once it's ready, open **Project Settings → API** and note:
 
 ### 3. Create the schema
 
-In the Supabase dashboard → **SQL Editor**, paste the contents of
-[`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) and run it.
-This creates the tables, RLS policies, and the room/matching functions.
+In the Supabase dashboard → **SQL Editor**, run each file in
+[`supabase/migrations/`](supabase/migrations) in order:
+1. `0001_init.sql` — tables, RLS policies, room/matching functions.
+2. `0002_starter_ordering.sql` — shared meal order + a curated "starter pack" so partners find matches fast.
 
 > Prefer the CLI? `npx supabase link` then `npx supabase db push`.
 

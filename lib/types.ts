@@ -11,6 +11,8 @@ export type Meal = {
   tags: string[] | null;
   ingredients: Ingredient[];
   source: string;
+  is_starter?: boolean;
+  sort_rank?: number | null;
 };
 
 export type RoomMember = {

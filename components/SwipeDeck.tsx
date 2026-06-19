@@ -104,6 +104,8 @@ export function SwipeDeck() {
   const [error, setError] = useState<string | null>(null);
   const [recipeMeal, setRecipeMeal] = useState<Meal | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [starterRemaining, setStarterRemaining] = useState<number | null>(null);
+  const [starterDismissed, setStarterDismissed] = useState(false);
 
   const topRef = useRef<CardHandle>(null);
   const fetchingRef = useRef(false);
@@ -112,6 +114,7 @@ export function SwipeDeck() {
   queueRef.current = queue;
   const recipeOpenRef = useRef(false);
   recipeOpenRef.current = recipeMeal !== null;
+  const hadStartersRef = useRef(false);
 
   const loadMore = useCallback(async () => {
     if (fetchingRef.current || !user) return;
@@ -154,7 +157,7 @@ export function SwipeDeck() {
     });
   }, [queue]);
 
-  // How many meals are still unrated by this user (the subtle counter).
+  // Counts: total unrated + unrated starter-pack meals (for the counter/nudge).
   useEffect(() => {
     if (!user) return;
     let on = true;
@@ -165,6 +168,13 @@ export function SwipeDeck() {
       ]);
       if (on && meals.count != null) {
         setRemaining(Math.max(0, meals.count - (prefs.count ?? 0)));
+      }
+      // Starter count (no-op if migration 0002 isn't applied yet).
+      const { data, error } = await supabase.rpc("count_unrated_starters");
+      if (on && !error) {
+        const n = (data as number) ?? 0;
+        if (n > 0) hadStartersRef.current = true;
+        setStarterRemaining(n);
       }
     })();
     return () => {
@@ -194,6 +204,8 @@ export function SwipeDeck() {
       setHistory((h) => [...h, { meal: top, choice }]);
       setQueue((q) => q.slice(1));
       setRemaining((r) => (r != null ? Math.max(0, r - 1) : r));
+      if (top.is_starter)
+        setStarterRemaining((r) => (r != null ? Math.max(0, r - 1) : r));
       persist(top, choice);
     },
     [persist],
@@ -207,6 +219,8 @@ export function SwipeDeck() {
     setExhausted(false);
     setQueue((q) => [last.meal, ...q]);
     setRemaining((r) => (r != null ? r + 1 : r));
+    if (last.meal.is_starter)
+      setStarterRemaining((r) => (r != null ? r + 1 : r));
     await supabase
       .from("preferences")
       .delete()
@@ -256,17 +270,50 @@ export function SwipeDeck() {
   }
 
   const top = queue[0];
+  const inStarterRound =
+    starterRemaining != null && starterRemaining > 0 && !starterDismissed;
+  const showMilestone =
+    starterRemaining === 0 && hadStartersRef.current && !starterDismissed;
+
+  const counterLabel = inStarterRound
+    ? `🍟 Starter picks · ${starterRemaining} left`
+    : remaining != null && remaining > 0
+      ? `${remaining} left to swipe`
+      : null;
 
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="flex w-full max-w-sm flex-col gap-2">
-        {remaining != null && remaining > 0 && (
+        {counterLabel && (
           <p className="self-end text-xs tabular-nums text-muted">
-            {remaining} left to swipe
+            {counterLabel}
           </p>
         )}
         <div className="relative aspect-[3/4] w-full">
-          {queue.length === 0 ? (
+          {showMilestone ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-border bg-card p-6 text-center">
+              <p className="text-lg font-semibold">
+                🎉 You&apos;ve swiped the starter set!
+              </p>
+              <p className="text-sm text-muted">
+                See what you both want, or keep going through the rest.
+              </p>
+              <div className="mt-1 flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/matches"
+                  className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-white"
+                >
+                  See matches →
+                </Link>
+                <button
+                  onClick={() => setStarterDismissed(true)}
+                  className="rounded-full border border-border px-4 py-2 text-sm"
+                >
+                  Keep swiping
+                </button>
+              </div>
+            </div>
+          ) : queue.length === 0 ? (
             <DeckMessage>
               🎉 You&apos;ve been through every meal!
               <br />
@@ -300,7 +347,7 @@ export function SwipeDeck() {
         </div>
       </div>
 
-      {top && (
+      {top && !showMilestone && (
         <>
           <div className="flex items-center justify-center gap-5">
             <div className="group relative">
