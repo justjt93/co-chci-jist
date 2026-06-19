@@ -18,6 +18,7 @@ import {
   type PanInfo,
 } from "motion/react";
 import { useSupabase } from "@/components/SupabaseProvider";
+import { RecipeModal } from "@/components/RecipeModal";
 import type { Choice, Meal } from "@/lib/types";
 
 type CardHandle = { decide: (choice: Choice) => void };
@@ -101,12 +102,15 @@ export function SwipeDeck() {
   const [initialised, setInitialised] = useState(false);
   const [exhausted, setExhausted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recipeMeal, setRecipeMeal] = useState<Meal | null>(null);
 
   const topRef = useRef<CardHandle>(null);
   const fetchingRef = useRef(false);
   const actedIdsRef = useRef<Set<number>>(new Set());
   const queueRef = useRef<Meal[]>([]);
   queueRef.current = queue;
+  const recipeOpenRef = useRef(false);
+  recipeOpenRef.current = recipeMeal !== null;
 
   const loadMore = useCallback(async () => {
     if (fetchingRef.current || !user) return;
@@ -177,9 +181,10 @@ export function SwipeDeck() {
       .match({ user_id: user.id, meal_id: last.meal.id });
   }, [history, supabase, user]);
 
-  // Keyboard shortcuts: ← = pass, → = eat.
+  // Keyboard shortcuts: ← = pass, → = eat (disabled while the recipe is open).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (recipeOpenRef.current) return;
       const t = e.target as HTMLElement | null;
       if (
         t &&
@@ -297,13 +302,17 @@ export function SwipeDeck() {
           <p className="text-xs text-muted">
             Tip: use ← / → keys, or swipe / drag the card.
           </p>
-          <Link
-            href={`/meal/${top.id}`}
+          <button
+            onClick={() => setRecipeMeal(top)}
             className="text-sm text-muted underline underline-offset-4"
           >
-            Peek at the recipe ↗
-          </Link>
+            View recipe ↗
+          </button>
         </>
+      )}
+
+      {recipeMeal && (
+        <RecipeModal meal={recipeMeal} onClose={() => setRecipeMeal(null)} />
       )}
     </div>
   );
