@@ -30,19 +30,23 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     let active = true;
 
     (async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      // No session yet → start an anonymous one so the app works without login.
-      if (!session) {
-        const { error } = await supabase.auth.signInAnonymously();
-        if (error) console.error("Anonymous sign-in failed:", error.message);
-      }
-
-      const {
+      // getUser() validates with the server, so it also catches a stale session
+      // whose user no longer exists. If there's no valid user, start a guest one
+      // so the app works without login.
+      let {
         data: { user },
       } = await supabase.auth.getUser();
+
+      if (!user) {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) {
+          console.error("Anonymous sign-in failed:", error.message);
+        } else {
+          ({
+            data: { user },
+          } = await supabase.auth.getUser());
+        }
+      }
 
       if (active) {
         setUser(user);

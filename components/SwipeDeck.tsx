@@ -177,6 +177,29 @@ export function SwipeDeck() {
       .match({ user_id: user.id, meal_id: last.meal.id });
   }, [history, supabase, user]);
 
+  // Keyboard shortcuts: ← = pass, → = eat.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.isContentEditable)
+      )
+        return;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        topRef.current?.decide("eat");
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        topRef.current?.decide("pass");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   if (loading || !initialised) {
     return <DeckMessage>Loading meals…</DeckMessage>;
   }
@@ -236,29 +259,44 @@ export function SwipeDeck() {
       {top && (
         <>
           <div className="flex items-center justify-center gap-5">
-            <button
-              aria-label="Pass"
-              onClick={() => topRef.current?.decide("pass")}
-              className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-pass bg-card text-2xl text-pass shadow transition-transform active:scale-90"
-            >
-              ✕
-            </button>
-            <button
-              aria-label="Undo"
-              onClick={undo}
-              disabled={history.length === 0}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-lg shadow disabled:opacity-30"
-            >
-              ↶
-            </button>
-            <button
-              aria-label="Eat"
-              onClick={() => topRef.current?.decide("eat")}
-              className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-eat bg-card text-2xl text-eat shadow transition-transform active:scale-90"
-            >
-              ♥
-            </button>
+            <div className="group relative">
+              <button
+                aria-label="Pass"
+                title="Pass (←)"
+                onClick={() => topRef.current?.decide("pass")}
+                className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-pass bg-card text-2xl text-pass shadow transition-transform active:scale-90"
+              >
+                ✕
+              </button>
+              <Tooltip>Pass (←)</Tooltip>
+            </div>
+            <div className="group relative">
+              <button
+                aria-label="Undo"
+                title="Undo last"
+                onClick={undo}
+                disabled={history.length === 0}
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card text-lg shadow disabled:opacity-30"
+              >
+                ↶
+              </button>
+              <Tooltip>Undo last</Tooltip>
+            </div>
+            <div className="group relative">
+              <button
+                aria-label="Eat"
+                title="Eat (→)"
+                onClick={() => topRef.current?.decide("eat")}
+                className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-eat bg-card text-2xl text-eat shadow transition-transform active:scale-90"
+              >
+                ♥
+              </button>
+              <Tooltip>Eat (→)</Tooltip>
+            </div>
           </div>
+          <p className="text-xs text-muted">
+            Tip: use ← / → keys, or swipe / drag the card.
+          </p>
           <Link
             href={`/meal/${top.id}`}
             className="text-sm text-muted underline underline-offset-4"
@@ -268,6 +306,14 @@ export function SwipeDeck() {
         </>
       )}
     </div>
+  );
+}
+
+function Tooltip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs font-medium text-background opacity-0 shadow transition-opacity duration-150 group-hover:opacity-100">
+      {children}
+    </span>
   );
 }
 

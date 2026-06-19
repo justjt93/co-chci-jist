@@ -66,6 +66,7 @@ export function RoomManager() {
   }
 
   async function signInWithGoogle() {
+    setError(null);
     const redirectTo = `${window.location.origin}/auth/callback?next=/room`;
     if (user?.is_anonymous) {
       // Link Google to the existing guest so picks are kept (same user id).
@@ -73,18 +74,20 @@ export function RoomManager() {
         provider: "google",
         options: { redirectTo },
       });
-      // Falls back to a plain sign-in if manual linking is disabled or the
+      if (!error) return; // browser is redirecting to Google
+      // Fall back to a plain sign-in if manual linking is disabled or the
       // Google account is already attached to another user.
-      if (error)
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo },
-        });
-    } else {
-      await supabase.auth.signInWithOAuth({
+      const { error: e2 } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },
       });
+      if (e2) setError(e2.message);
+    } else {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+      if (error) setError(error.message);
     }
   }
 
