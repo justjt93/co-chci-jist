@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf7f2;
+  --foreground: #1f1a17;
+  --card: #ffffff;
+  --muted: #8a817c;
+  --border: #ece6df;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #15110f;
+    --foreground: #f4efe9;
+    --card: #221b18;
+    --muted: #a59a92;
+    --border: #322a25;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: #ea580c;
+  --color-brand-strong: #c2410c;
+  --color-eat: #16a34a;
+  --color-pass: #ef4444;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Keep dragging cards from selecting text / showing the iOS callout. */
+.select-none-touch {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
