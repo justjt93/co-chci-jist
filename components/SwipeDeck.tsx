@@ -142,6 +142,17 @@ export function SwipeDeck() {
     if (queue.length <= 5) loadMore();
   }, [user, queue.length, exhausted, loadMore]);
 
+  // Warm the browser cache for upcoming cards so their image is ready by the
+  // time the card is promoted to the top (no pop-in on swipe).
+  useEffect(() => {
+    queue.slice(1, 6).forEach((m) => {
+      if (m.image_url) {
+        const img = new window.Image();
+        img.src = m.image_url;
+      }
+    });
+  }, [queue]);
+
   const persist = useCallback(
     async (meal: Meal, choice: Choice) => {
       if (!user) return;
@@ -242,7 +253,7 @@ export function SwipeDeck() {
             return (
               <div
                 key={meal.id}
-                className="absolute inset-0"
+                className="absolute inset-0 transition-transform duration-300 ease-out"
                 style={{
                   zIndex: 10 - i,
                   transform: `scale(${1 - i * 0.04}) translateY(${i * 12}px)`,
