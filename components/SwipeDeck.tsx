@@ -103,6 +103,7 @@ export function SwipeDeck() {
   const [exhausted, setExhausted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recipeMeal, setRecipeMeal] = useState<Meal | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   const topRef = useRef<CardHandle>(null);
   const fetchingRef = useRef(false);
@@ -153,6 +154,24 @@ export function SwipeDeck() {
     });
   }, [queue]);
 
+  // How many meals are still unrated by this user (the subtle counter).
+  useEffect(() => {
+    if (!user) return;
+    let on = true;
+    (async () => {
+      const [meals, prefs] = await Promise.all([
+        supabase.from("meals").select("*", { count: "exact", head: true }),
+        supabase.from("preferences").select("*", { count: "exact", head: true }),
+      ]);
+      if (on && meals.count != null) {
+        setRemaining(Math.max(0, meals.count - (prefs.count ?? 0)));
+      }
+    })();
+    return () => {
+      on = false;
+    };
+  }, [supabase, user]);
+
   const persist = useCallback(
     async (meal: Meal, choice: Choice) => {
       if (!user) return;
@@ -174,6 +193,7 @@ export function SwipeDeck() {
       actedIdsRef.current.add(top.id);
       setHistory((h) => [...h, { meal: top, choice }]);
       setQueue((q) => q.slice(1));
+      setRemaining((r) => (r != null ? Math.max(0, r - 1) : r));
       persist(top, choice);
     },
     [persist],
@@ -186,6 +206,7 @@ export function SwipeDeck() {
     actedIdsRef.current.delete(last.meal.id);
     setExhausted(false);
     setQueue((q) => [last.meal, ...q]);
+    setRemaining((r) => (r != null ? r + 1 : r));
     await supabase
       .from("preferences")
       .delete()
@@ -238,38 +259,45 @@ export function SwipeDeck() {
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="relative aspect-[3/4] w-full max-w-sm">
-        {queue.length === 0 ? (
-          <DeckMessage>
-            🎉 You&apos;ve been through every meal!
-            <br />
-            <Link href="/matches" className="text-brand underline">
-              See your matches →
-            </Link>
-          </DeckMessage>
-        ) : (
-          queue.slice(0, 3).map((meal, i) => {
-            const isTop = i === 0;
-            return (
-              <div
-                key={meal.id}
-                className="absolute inset-0 transition-transform duration-300 ease-out"
-                style={{
-                  zIndex: 10 - i,
-                  transform: `scale(${1 - i * 0.04}) translateY(${i * 12}px)`,
-                  pointerEvents: isTop ? "auto" : "none",
-                }}
-              >
-                <SwipeCard
-                  ref={isTop ? topRef : undefined}
-                  meal={meal}
-                  draggable={isTop}
-                  onDecided={handleDecided}
-                />
-              </div>
-            );
-          })
+      <div className="flex w-full max-w-sm flex-col gap-2">
+        {remaining != null && remaining > 0 && (
+          <p className="self-end text-xs tabular-nums text-muted">
+            {remaining} left to swipe
+          </p>
         )}
+        <div className="relative aspect-[3/4] w-full">
+          {queue.length === 0 ? (
+            <DeckMessage>
+              🎉 You&apos;ve been through every meal!
+              <br />
+              <Link href="/matches" className="text-brand underline">
+                See your matches →
+              </Link>
+            </DeckMessage>
+          ) : (
+            queue.slice(0, 3).map((meal, i) => {
+              const isTop = i === 0;
+              return (
+                <div
+                  key={meal.id}
+                  className="absolute inset-0 transition-transform duration-300 ease-out"
+                  style={{
+                    zIndex: 10 - i,
+                    transform: `scale(${1 - i * 0.04}) translateY(${i * 12}px)`,
+                    pointerEvents: isTop ? "auto" : "none",
+                  }}
+                >
+                  <SwipeCard
+                    ref={isTop ? topRef : undefined}
+                    meal={meal}
+                    draggable={isTop}
+                    onDecided={handleDecided}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {top && (
