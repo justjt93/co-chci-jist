@@ -42,7 +42,8 @@ Once it's ready, open **Project Settings → API** and note:
 In the Supabase dashboard → **SQL Editor**, run each file in
 [`supabase/migrations/`](supabase/migrations) in order:
 1. `0001_init.sql` — tables, RLS policies, room/matching functions.
-2. `0002_starter_ordering.sql` — shared meal order + a curated "starter pack" so partners find matches fast.
+2. `0002_starter_ordering.sql` — shared meal order + a "starter pack" so partners find matches fast.
+3. `0003_curated_starters.sql` — refines the starter pack to familiar cuisines (no desserts/sides/breakfast).
 
 > Prefer the CLI? `npx supabase link` then `npx supabase db push`.
 
