@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSupabase } from "@/components/SupabaseProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemePicker } from "@/components/ThemePicker";
 
 const NAV = [
   { href: "/swipe", label: "Swipe", icon: "🍽️" },
@@ -50,7 +50,7 @@ export function AppHeader() {
               );
             })}
           </nav>
-          <ThemeToggle />
+          <ThemePicker />
         </div>
       </div>
       <div className="mx-auto max-w-2xl px-4 pb-1 text-right text-[11px] text-muted">

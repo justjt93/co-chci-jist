@@ -25,8 +25,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-// Apply the saved (or system) theme before paint to avoid a flash.
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
+// Apply the saved theme before paint to avoid a flash. Defaults to McDonald's.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(['light','dark','mcdonalds'].indexOf(t)<0){t='mcdonalds';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 
 export default function RootLayout({
   children,
