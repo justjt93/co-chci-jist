@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf7f2;
-  --foreground: #1f1a17;
+  /* Light theme — McDonald's: white / red / gold */
+  --background: #fbf7ef;
+  --foreground: #1b1714;
   --card: #ffffff;
-  --muted: #8a817c;
-  --border: #ece6df;
+  --muted: #837b70;
+  --border: #ece3d3;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #15110f;
-    --foreground: #f4efe9;
-    --card: #221b18;
-    --muted: #a59a92;
-    --border: #322a25;
-  }
+.dark {
+  /* Dark theme — the original warm-dark look */
+  --background: #15110f;
+  --foreground: #f4efe9;
+  --card: #221b18;
+  --muted: #a59a92;
+  --border: #322a25;
 }
 
 @theme inline {
@@ -24,8 +24,9 @@
   --color-card: var(--card);
   --color-muted: var(--muted);
   --color-border: var(--border);
-  --color-brand: #ea580c;
-  --color-brand-strong: #c2410c;
+  --color-brand: #da291c; /* McDonald's red */
+  --color-brand-strong: #a80f12;
+  --color-accent: #ffc72c; /* McDonald's gold */
   --color-eat: #16a34a;
   --color-pass: #ef4444;
   --font-sans: var(--font-geist-sans);

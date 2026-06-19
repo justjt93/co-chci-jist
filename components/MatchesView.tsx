@@ -94,7 +94,7 @@ export function MatchesView() {
           <div className="rounded-2xl border border-border bg-card p-4">
             <button
               onClick={surprise}
-              className="w-full rounded-full bg-brand px-4 py-3 font-semibold text-white transition-transform active:scale-95"
+              className="w-full rounded-full bg-accent px-4 py-3 font-semibold text-black transition-transform active:scale-95"
             >
               🎲 Surprise me
             </button>

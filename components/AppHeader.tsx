@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSupabase } from "@/components/SupabaseProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV = [
   { href: "/swipe", label: "Swipe", icon: "🍽️" },
@@ -27,27 +28,30 @@ export function AppHeader() {
           co chci jíst <span aria-hidden>🍽️</span>
         </Link>
 
-        <nav className="flex items-center gap-1">
-          {NAV.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                  active
-                    ? "bg-brand text-white"
-                    : "text-muted hover:bg-card hover:text-foreground"
-                }`}
-              >
-                <span aria-hidden className="mr-1">
-                  {item.icon}
-                </span>
-                <span className="hidden sm:inline">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="flex items-center gap-1">
+          <nav className="flex items-center gap-1">
+            {NAV.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                    active
+                      ? "bg-brand text-white"
+                      : "text-muted hover:bg-card hover:text-foreground"
+                  }`}
+                >
+                  <span aria-hidden className="mr-1">
+                    {item.icon}
+                  </span>
+                  <span className="hidden sm:inline">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          <ThemeToggle />
+        </div>
       </div>
       <div className="mx-auto max-w-2xl px-4 pb-1 text-right text-[11px] text-muted">
         {status}

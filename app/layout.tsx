@@ -20,10 +20,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ea580c",
+  themeColor: "#da291c",
   width: "device-width",
   initialScale: 1,
 };
+
+// Apply the saved (or system) theme before paint to avoid a flash.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -33,9 +36,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <SupabaseProvider>
           <AppHeader />
           <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">

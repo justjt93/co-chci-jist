@@ -20,6 +20,42 @@ type SupabaseContextValue = {
 
 const SupabaseContext = createContext<SupabaseContextValue | null>(null);
 
+// Shared across mounts so React Strict Mode / concurrent renders can't kick off
+// more than one anonymous sign-in at a time (which created duplicate guests).
+let anonSignIn: Promise<void> | null = null;
+
+async function ensureSession(supabase: SupabaseClient) {
+  // Gate sign-in on the LOCAL session — using getUser() to decide *whether* to
+  // sign in was the bug: a slow/blocked validation (common in the in-app
+  // browsers messaging apps open links in) looked like "no session", so a
+  // brand-new guest got created on top of the existing one (several identities).
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session) {
+    // Validate, but only discard the session when the server says it's truly
+    // invalid (e.g. the user was deleted). Transient/network errors keep it,
+    // so we never spawn duplicate guests.
+    const { error } = await supabase.auth.getUser();
+    if (!error) return;
+    const status = (error as { status?: number }).status;
+    if (status !== 401 && status !== 403) return;
+    // else: session is invalid → fall through and create a fresh guest.
+  }
+
+  if (!anonSignIn) {
+    anonSignIn = supabase.auth
+      .signInAnonymously()
+      .then(({ error }) => {
+        if (error) console.error("Anonymous sign-in failed:", error.message);
+      })
+      .finally(() => {
+        anonSignIn = null;
+      });
+  }
+  await anonSignIn;
+}
+
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createClient());
   const [user, setUser] = useState<User | null>(null);
@@ -30,38 +66,23 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     let active = true;
 
     (async () => {
-      // getUser() validates with the server, so it also catches a stale session
-      // whose user no longer exists. If there's no valid user, start a guest one
-      // so the app works without login.
-      let {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        const { error } = await supabase.auth.signInAnonymously();
-        if (error) {
-          console.error("Anonymous sign-in failed:", error.message);
-        } else {
-          ({
-            data: { user },
-          } = await supabase.auth.getUser());
-        }
-      }
-
+      await ensureSession(supabase);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (active) {
-        setUser(user);
+        setUser(session?.user ?? null);
         setLoading(false);
       }
     })();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      // Signing out should drop straight back into a fresh guest session
-      // rather than leaving the app with no user at all.
+      // A sign-out should drop back into a fresh guest session.
       if (event === "SIGNED_OUT") {
-        await supabase.auth.signInAnonymously();
+        ensureSession(supabase);
       }
       if (
         event === "SIGNED_IN" ||

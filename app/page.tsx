@@ -40,7 +40,7 @@ export default function HomePage() {
         </p>
         <Link
           href="/swipe"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-brand-strong shadow transition-transform active:scale-95"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-black shadow transition-transform active:scale-95"
         >
           Start swiping →
         </Link>
